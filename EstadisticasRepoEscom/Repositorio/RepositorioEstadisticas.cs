@@ -267,5 +267,53 @@ namespace EstadisticasRepoEscom.Repositorio
             }
         }
 
+        public async Task<List<EstadisticaMaterialesPorAutorDTO>> GetEstadisticasMaterialesPorAutor(int limit = 10)
+        {
+            using var connection = new SqliteConnection(_dbConfig.ConnectionString);
+            await connection.OpenAsync();
+
+            try
+            {
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    SELECT 
+                        u.id as usuarioId,
+                        (u.nombre || ' ' || u.apellidoP || COALESCE(' ' || u.apellidoM, '')) as nombreCompleto,
+                        u.email,
+                        COUNT(*) as cantidadMateriales,
+                        ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM Material), 2) as porcentajeDelTotal
+                    FROM Material m
+                    INNER JOIN Usuario u ON m.creadoPor = u.id
+                    WHERE m.creadoPor IS NOT NULL AND m.creadoPor != 0
+                    GROUP BY u.id, u.nombre, u.apellidoP, u.apellidoM, u.email
+                    ORDER BY cantidadMateriales DESC
+                    LIMIT @limit";
+
+                command.Parameters.AddWithValue("@limit", limit);
+
+                var materialesPorAutor = new List<EstadisticaMaterialesPorAutorDTO>();
+                using var reader = await command.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    materialesPorAutor.Add(new EstadisticaMaterialesPorAutorDTO
+                    {
+                        UsuarioId = reader.GetInt32("usuarioId"),
+                        NombreCompleto = reader.GetString("nombreCompleto"),
+                        Email = reader.GetString("email"),
+                        CantidadMateriales = reader.GetInt32("cantidadMateriales"),
+                        PorcentajeDelTotal = reader.GetDouble("porcentajeDelTotal")
+                    });
+                }
+
+                return materialesPorAutor;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error al obtener estadísticas de materiales por autor");
+                return new List<EstadisticaMaterialesPorAutorDTO>();
+            }
+        }
+
     }
 }

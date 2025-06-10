@@ -186,5 +186,32 @@ namespace EstadisticasRepoEscom.Controllers
                 return StatusCode(500, ApiResponse.Failure("Error interno del servidor"));
             }
         }
+
+        /// <summary>
+        /// Obtiene estadísticas de la cantidad de materiales subidos por autor
+        /// </summary>
+        [HttpGet("materiales-por-creador")]
+        public async Task<ActionResult<ApiResponse<List<EstadisticaMaterialesPorAutorDTO>>>> GetEstadisticasMaterialesPorAutor(
+            [FromQuery] int limit = 10)
+        {
+            try
+            {
+                if (limit <= 0 || limit > 100)
+                {
+                    return BadRequest(ApiResponse.Failure("El límite debe estar entre 1 y 100"));
+                }
+
+                var materialesPorAutor = await _estadisticasRepository.GetEstadisticasMaterialesPorAutor(limit);
+                return Ok(ApiResponse<List<EstadisticaMaterialesPorAutorDTO>>.Success(
+                    materialesPorAutor,
+                    $"Top {materialesPorAutor.Count} autores con más materiales subidos obtenidos exitosamente"
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener estadísticas de materiales por autor");
+                return StatusCode(500, ApiResponse.Failure("Error interno del servidor"));
+            }
+        }
     }
 }

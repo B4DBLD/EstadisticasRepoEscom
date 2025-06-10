@@ -11,5 +11,6 @@ namespace EstadisticasRepoEscom.Repositorio
         Task<List<EstadisticaMateriaDTO>> GetEstadisticasMaterias(int limit = 10);
         Task<List<EstadisticaAutorDTO>> GetEstadisticasAutores(int limit = 10);
         Task<List<EstadisticaMaterialDTO>> GetEstadisticasMateriales(int limit = 10);
+        Task<List<EstadisticaMaterialesPorAutorDTO>> GetEstadisticasMaterialesPorAutor(int limit = 10);
     }
 }
